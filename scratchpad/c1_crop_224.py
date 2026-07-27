@@ -1,9 +1,10 @@
 """FFHQ512 / LFW -> 224 arcface-aligned crops, using PerceptFace's own Face_detect_crop.
 
-Adapted from methods/perceptface/prep_crops.py. det_size = the image size, no padding
-anywhere (REPRODUCE.md section 5: SCRFD upsamples first when det_size exceeds the image
-and detection collapses). Images with no detection are skipped whole and recorded.
-Resumable: an existing crop is not redone.
+Adapted from methods/perceptface/prep_crops.py. No padding anywhere. det_size never
+exceeds the image size (REPRODUCE.md section 5: SCRFD upsamples first when it does and
+detection collapses) and must be a multiple of 32 — see the SETS comment. FFHQ 512x512
+uses 512 exactly; LFW 250x250 uses 224, so LFW is downscaled before detection.
+Images with no detection are skipped whole and recorded. Resumable.
 
 Usage: python c1_crop_224.py {ffhq|lfw}
 """
