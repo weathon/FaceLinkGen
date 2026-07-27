@@ -9,19 +9,27 @@ split. FFHQ has one image per identity, so every cross pair is an impostor and t
 no genuine same-identity different-photo pair available. Top-1 is closed-set rank-1
 identification: gallery = all validation originals, one correct entry per query, no
 distractors and no rejection.
+
+Usage:  python insight_test.py <dir with insight_student_embeddings_val_epoch*.pkl>
+        python insight_test.py log             # full-data attack
+        python insight_test.py log_lowdata50   # 50-pair attack
+The teacher/protected embeddings and the split always come from log/.
 """
 import os
+import sys
 import pickle
 import numpy as np
 
+EMB = sys.argv[1]
+
 epochs = sorted(int(f.split('epoch')[1].split('.')[0])
-                for f in os.listdir('log') if f.startswith('insight_student_embeddings_val_epoch'))
+                for f in os.listdir(EMB) if f.startswith('insight_student_embeddings_val_epoch'))
 E = epochs[-1]
 print('using student embeddings from epoch %d (available: %s)' % (E, epochs))
 
 teacher = pickle.load(open('log/teacher_embeddings_insight.pkl', 'rb'))
 protected = pickle.load(open('log/protected_embeddings_insight.pkl', 'rb'))
-student = pickle.load(open('log/insight_student_embeddings_val_epoch%d.pkl' % E, 'rb'))
+student = pickle.load(open(EMB + '/insight_student_embeddings_val_epoch%d.pkl' % E, 'rb'))
 val_names = pickle.load(open('log/val_paths.pkl', 'rb'))
 
 O = np.stack([teacher[n] for n in val_names])
@@ -52,6 +60,6 @@ for label, Q in [('before attack', P), ('after attack', S), ('upper bound (orig)
     print('%-22s %8.4f %8.4f %10.4f %10.4f %10.4f'
           % (label, g.mean(), np.median(g), (g > thr3).mean(), (g > thr4).mean(), rank1))
 
-np.save('log/val_cos_before.npy', (P * O).sum(1))
-np.save('log/val_cos_after.npy', (S * O).sum(1))
-print('\nper-pair cosines saved to log/val_cos_{before,after}.npy')
+np.save(EMB + '/val_cos_before.npy', (P * O).sum(1))
+np.save(EMB + '/val_cos_after.npy', (S * O).sum(1))
+print('\nper-pair cosines saved to %s/val_cos_{before,after}.npy' % EMB)
