@@ -23,10 +23,12 @@ import net
 
 
 def load_adaface(device):
+    """Returns the model in eval mode. The student must call .train() explicitly —
+    output_layer's Dropout(0.4) and the BatchNorms must not be live for the teacher."""
     model = net.build_model('ir_101')
     sd = torch.load(CKPT, map_location='cpu')['state_dict']
     model.load_state_dict({k[6:]: v for k, v in sd.items() if k.startswith('model.')})
-    return model.to(device)
+    return model.to(device).eval()
 
 
 def read_112(path):

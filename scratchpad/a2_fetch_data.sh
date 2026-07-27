@@ -25,8 +25,13 @@ echo "FFHQ entries on disk: $(ls $F/images | wc -l)"
 
 echo "=== LFW deepfunneled $(date)"
 B=https://huggingface.co/datasets/DerrickUnleashed/LFW/resolve/main
+# `[ -f ] ||` would short-circuit on a half-written file from an interrupted run and
+# accept it as complete, so -C - would never get a chance to resume. Sentinel instead.
 for f in lfw-deepfunneled.zip lfw_allnames.csv people.csv pairs.csv matchpairsDevTest.csv mismatchpairsDevTest.csv; do
-    [ -f $L/$f ] || curl -f -L -C - -o $L/$f $B/$f
+    if [ ! -f $L/$f.done ]; then
+        curl -f -L -C - -o $L/$f $B/$f
+        touch $L/$f.done
+    fi
 done
 if [ ! -f $L/.extracted ]; then
     unzip -n -q $L/lfw-deepfunneled.zip -d $L

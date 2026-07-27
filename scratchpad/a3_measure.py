@@ -24,7 +24,7 @@ imgs = [e for e in entries if os.path.splitext(e)[1].lower() in ('.png', '.jpg',
 print('  image files      :', len(imgs))
 random.seed(0)
 c = collections.Counter()
-for f in random.sample(imgs, min(300, len(imgs))):
+for f in random.sample(imgs, 300):
     im = Image.open(os.path.join(FFHQ, f))
     c[(im.size, im.mode)] += 1
 print('  sampled 300 (size, mode):', c.most_common())

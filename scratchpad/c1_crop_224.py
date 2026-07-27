@@ -16,9 +16,13 @@ sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/third
 
 DET_ROOT = '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/checkpoints/perceptface'
 WORK = '/raid/wg25r/redteam_work'
+# det_size must be a multiple of 32 (SCRFD builds its anchor grid as input_h // stride;
+# 250 raises "operands could not be broadcast together with shapes (450,) (512,)"), and
+# must not exceed the image size or SCRFD upsamples first and detection collapses.
+# FFHQ is 512x512 -> 512. LFW is 250x250 -> 224, the largest multiple of 32 that fits.
 SETS = {
     'ffhq': ('/raid/wg25r/ffhq512_hf/images/FFHQ512/FFHQ512', 512),
-    'lfw': ('/raid/wg25r/lfw/lfw-deepfunneled', 250),
+    'lfw': ('/raid/wg25r/lfw/lfw-deepfunneled', 224),
 }
 WHICH = sys.argv[1]
 SRC, DET = SETS[WHICH]
@@ -34,6 +38,12 @@ def init_worker():
     app.prepare(ctx_id=0, det_thresh=0.6, det_size=(DET, DET), mode='None')
 
 
+def crop_name(rel):
+    """LFW is <Name>/<Name>_NNNN.jpg, FFHQ is NNNNN.png. Flatten the path and always
+    write PNG so the train and test crops go through the same (lossless) codec."""
+    return os.path.splitext(rel.replace('/', '__'))[0] + '.png'
+
+
 def run_one(rel):
     img = cv2.imread(os.path.join(SRC, rel))
     if img is None:
@@ -41,8 +51,7 @@ def run_one(rel):
     out = app.get(img, 224)
     if out is None:
         return rel, False
-    dst = os.path.join(DST, rel.replace('/', '__'))
-    cv2.imwrite(dst, out[0][0])
+    cv2.imwrite(os.path.join(DST, crop_name(rel)), out[0][0])
     return rel, True
 
 
@@ -53,8 +62,17 @@ if __name__ == '__main__':
     else:
         rels = sorted(p + '/' + f for p in os.listdir(SRC) if not p.startswith('.')
                       for f in os.listdir(os.path.join(SRC, p)))
-    todo = [r for r in rels if not os.path.exists(os.path.join(DST, r.replace('/', '__')))]
-    print('%s: candidates %d, todo %d' % (WHICH, len(rels), len(todo)), flush=True)
+
+    # A skipped image produces no crop file, so without this it would be re-detected on
+    # every resume and appended to the log again. The detector is deterministic.
+    SKIPFILE = WORK + '/crops/' + WHICH + '/skipped_224.txt'
+    known = set()
+    if os.path.exists(SKIPFILE):          # resume state; absent on the first run
+        known = set(open(SKIPFILE).read().split())
+    todo = [r for r in rels
+            if r not in known and not os.path.exists(os.path.join(DST, crop_name(r)))]
+    print('%s: candidates %d, known-skipped %d, todo %d'
+          % (WHICH, len(rels), len(known), len(todo)), flush=True)
 
     skipped = []
     done = 0
@@ -63,11 +81,13 @@ if __name__ == '__main__':
             done += 1
             if not ok:
                 skipped.append(rel)
+                print('NO FACE ' + rel, flush=True)
             if done % 2000 == 0:
                 print('%d/%d skipped=%d' % (done, len(todo), len(skipped)), flush=True)
 
-    with open(WORK + '/crops/' + WHICH + '/skipped_224.txt', 'a') as f:
-        for r in sorted(skipped):
+    with open(SKIPFILE, 'w') as f:
+        for r in sorted(known | set(skipped)):
             f.write(r + '\n')
-    print('DONE %s cropped=%d skipped=%d on_disk=%d'
-          % (WHICH, len(todo) - len(skipped), len(skipped), len(os.listdir(DST))), flush=True)
+    print('DONE %s cropped=%d skipped_this_run=%d skipped_total=%d on_disk=%d'
+          % (WHICH, len(todo) - len(skipped), len(skipped),
+             len(known | set(skipped)), len(os.listdir(DST))), flush=True)
