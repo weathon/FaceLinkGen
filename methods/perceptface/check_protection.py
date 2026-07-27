@@ -15,8 +15,8 @@ import random
 import numpy as np
 import cv2
 
-CROPS = '/path/to/perceptface_work/crops224'
-PROT = '/path/to/perceptface_work/protected224'
+CROPS = '../../data/perceptface/crops224'
+PROT = '../../data/perceptface/protected224'
 LOG = '../../attacks/perceptface/log'
 
 teacher = pickle.load(open(LOG + '/teacher_embeddings_insight.pkl', 'rb'))

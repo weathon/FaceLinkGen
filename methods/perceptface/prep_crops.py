@@ -1,8 +1,9 @@
 """FFHQ512 -> 224 arcface-aligned crops, using PerceptFace's own Face_detect_crop.
 
-PERCEPTFACE points at a checkout of the official HuggingFace Space
-(https://huggingface.co/spaces/daizigege/PerceptFace), which is the complete version of
-the released code and carries every weight; the GitHub repo is missing several files.
+Run from this directory. SRC is the only path you have to fill in: it is the raw FFHQ512
+image directory, which is not shipped with this repo. Everything else resolves inside the
+repo (third_party/perceptface for the code, checkpoints/perceptface for SCRFD,
+data/perceptface for the output; both of the latter are gitignored).
 
 det_size = (512,512) = image size. No padding anywhere. Images with no SCRFD detection
 are skipped and recorded in skipped.txt. Resumable: an existing crop is not redone.
@@ -12,12 +13,11 @@ import sys
 import cv2
 import multiprocessing as mp
 
-PERCEPTFACE = '/path/to/PerceptFace_hf_space'
-sys.path.insert(0, PERCEPTFACE)
+sys.path.insert(0, '../../third_party/perceptface')
 
 SRC = '/path/to/FFHQ512/images'
-DST = '/path/to/perceptface_work/crops224'
-DET_ROOT = PERCEPTFACE + '/insightface_func/models'
+DST = '../../data/perceptface/crops224'
+DET_ROOT = '../../checkpoints/perceptface'  # holds antelope/scrfd_10g_bnkps.onnx
 CORRUPT = {'08828.png'}  # PNG IDAT checksum error in the FFHQ512 release used here
 
 app = None

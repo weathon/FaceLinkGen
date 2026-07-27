@@ -8,6 +8,8 @@ Faithful to the released generating_protected_faces_224.py / AIDPro_MSE.py:
 
 PerceptFace is fully deterministic: no key, no randomness, the same input always maps to
 the same protected image, which is what makes the paired distillation attack possible.
+
+Run from this directory.
 """
 import os
 import sys
@@ -18,13 +20,13 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 from PIL import Image
 
-PERCEPTFACE = '/path/to/PerceptFace_hf_space'
-sys.path.insert(0, PERCEPTFACE)
+sys.path.insert(0, '../../third_party/perceptface')
 from fs_networks_fix import Generator_Adain_Upsample
 from AIDPro_MSE import ID_transform
 
-SRC = '/path/to/perceptface_work/crops224'
-DST = '/path/to/perceptface_work/protected224'
+CKPT = '../../checkpoints/perceptface'
+SRC = '../../data/perceptface/crops224'
+DST = '../../data/perceptface/protected224'
 device = 'cuda'
 
 os.makedirs(DST, exist_ok=True)
@@ -33,19 +35,19 @@ todo = [n for n in names if not os.path.exists(os.path.join(DST, n))]
 print('crops %d, todo %d' % (len(names), len(todo)), flush=True)
 
 netG = Generator_Adain_Upsample(input_nc=3, output_nc=3, latent_size=512, n_blocks=9).to(device)
-netG.load_state_dict(torch.load(PERCEPTFACE + '/pretrained_models/90000_net_G.pth',
+netG.load_state_dict(torch.load(CKPT + '/90000_net_G.pth',
                                 map_location='cpu'))
 netG.eval()
 
 # arcface_checkpoint.tar is a pickled nn.Module, not a state_dict, so weights_only=False
 # is required on torch >= 2.6, and models/arcface_models.py must be importable.
-netArc = torch.load(PERCEPTFACE + '/pretrained_models/arcface_checkpoint.tar',
+netArc = torch.load(CKPT + '/arcface_checkpoint.tar',
                     map_location='cpu', weights_only=False).to(device)
 netArc.eval()
 
 WI = ID_transform(512).to(device)
 WI.load_state_dict(torch.load(
-    PERCEPTFACE + '/pretrained_models/MSE_new_all_loss_id_5_rec_5_wa_5_step_40000.pt',
+    CKPT + '/MSE_new_all_loss_id_5_rec_5_wa_5_step_40000.pt',
     map_location='cpu')['WI'])
 WI.eval()
 

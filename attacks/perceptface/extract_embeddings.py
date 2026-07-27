@@ -21,8 +21,8 @@ import torch.utils.data as data
 from onnx2torch import convert
 
 ONNX = '../../checkpoints/model.onnx'
-CROPS = '/path/to/perceptface_work/crops224'
-PROT = '/path/to/perceptface_work/protected224'
+CROPS = '../../data/perceptface/crops224'
+PROT = '../../data/perceptface/protected224'
 N_TRAIN = 8000
 device = 'cuda'
 

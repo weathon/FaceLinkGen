@@ -27,7 +27,7 @@ import tqdm
 import wandb
 
 ONNX = '../../checkpoints/model.onnx'
-PROT = '/path/to/perceptface_work/protected224'
+PROT = '../../data/perceptface/protected224'
 EPOCHS = 10
 device = 'cuda'
 os.makedirs('log', exist_ok=True)

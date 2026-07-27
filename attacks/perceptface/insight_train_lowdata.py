@@ -27,7 +27,7 @@ import tqdm
 import wandb
 
 ONNX = '../../checkpoints/model.onnx'
-PROT = '/path/to/perceptface_work/protected224'
+PROT = '../../data/perceptface/protected224'
 LOG = 'log_lowdata50'
 N_TRAIN = 50
 EPOCHS = 5
