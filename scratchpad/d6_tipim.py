@@ -154,7 +154,7 @@ for ds, name in mine:
     # Write then rename: cv2.imwrite is not atomic and resume skips by file existence, so
     # a kill mid-write would leave a truncated PNG that is skipped forever and consumed
     # downstream as a valid protected image.
-    tmp_path = dst + '.part%d' % args.shard
+    tmp_path = dst + '.part%d.png' % args.shard   # cv2 picks the writer from the extension
     cv2.imwrite(tmp_path, cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
     os.replace(tmp_path, dst)
     done += 1
