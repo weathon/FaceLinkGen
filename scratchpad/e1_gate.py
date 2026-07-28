@@ -10,7 +10,7 @@ Exits non-zero if either mean genuine cosine is above 0.6. For CanFG / CanFG-Ano
 doubles as the crop-match check: the released checkpoint was trained on CelebA aligned by
 CanFG's own MTCNN, so a high cosine here says the alignment did not carry over.
 
-Usage: python e1_gate.py {canfg|canfg_ano|perceptface|tipim}
+Usage: python e1_gate.py {canfg|canfg_ano|tipim|perceptface_official|perceptface_retrained}
 """
 import os
 import sys
@@ -28,7 +28,8 @@ from premodels.irse import Backbone
 from adaface_wrap import load_adaface
 
 # The crop the method actually consumed, so pixel L1 compares like with like.
-CROPSIZE = {'canfg': 128, 'canfg_ano': 128, 'perceptface': 224, 'tipim': 112}
+CROPSIZE = {'canfg': 128, 'canfg_ano': 128, 'tipim': 112,
+            'perceptface_official': 224, 'perceptface_retrained': 224}
 METHOD = sys.argv[1]
 SRC = '%s/crops/ffhq/%d' % (WORK, CROPSIZE[METHOD])
 PROT = '%s/protected/%s/ffhq' % (WORK, METHOD)
