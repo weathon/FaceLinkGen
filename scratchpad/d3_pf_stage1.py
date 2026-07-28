@@ -95,6 +95,7 @@ def critic(feats):
     return torch.stack([f[-1].mean() for f in feats]).mean()
 
 
+last_fus = float('nan')   # a resume starting at step 999 prints before any even step
 t0 = time.time()
 stop = False
 while not stop:
@@ -149,11 +150,14 @@ while not stop:
         wandb.log(logd)
         step += 1
 
+        if fus is not None:
+            last_fus = fus
         if step % 1000 == 0:
-            print('step %d  D %.3f  adv %.3f  id %.4f  attr %.4f  fus %s  (%.0f s)'
+            # step was already incremented, so the step that just ran is odd and never
+            # computes L_fus. Print the most recent one that did; wandb has the real series.
+            print('step %d  D %.3f  adv %.3f  id %.4f  attr %.4f  fus(last) %.4f  (%.0f s)'
                   % (step, loss_D.item(), loss_adv.item(), loss_id.item(),
-                     loss_attr.item(), 'n/a' if fus is None else '%.4f' % fus,
-                     time.time() - t0), flush=True)
+                     loss_attr.item(), last_fus, time.time() - t0), flush=True)
             with torch.no_grad():
                 netG.eval()
                 grid = torch.cat([real[:8], netG(real[:8], torch.roll(arc[:8], 1, dims=0)),

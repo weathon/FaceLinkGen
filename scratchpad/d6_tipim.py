@@ -151,7 +151,12 @@ for ds, name in mine:
         adv_images = tmp_advs[best].detach().requires_grad_(True)
 
     out = adv_images.detach().permute(0, 2, 3, 1).cpu().numpy()[0]
-    cv2.imwrite(dst, cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
+    # Write then rename: cv2.imwrite is not atomic and resume skips by file existence, so
+    # a kill mid-write would leave a truncated PNG that is skipped forever and consumed
+    # downstream as a valid protected image.
+    tmp_path = dst + '.part%d' % args.shard
+    cv2.imwrite(tmp_path, cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
+    os.replace(tmp_path, dst)
     done += 1
     if done % 25 == 0:
         print('shard %d: %d/%d' % (args.shard, done, len(mine)), flush=True)
