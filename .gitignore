@@ -22,3 +22,4 @@ generated*/
 *.zst
 *.pid
 *.log
+artifacts/
