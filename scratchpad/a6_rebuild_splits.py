@@ -28,16 +28,16 @@ def crops(ds, sz):
     return set(os.listdir('%s/crops/%s/%d' % (W, ds, sz)))
 
 
-def key(rel):
-    return os.path.splitext(rel.replace('/', '__'))[0] + '.png'
-
-
 # ---------------- LFW ----------------
 pool_keys = crops('lfw', 224) & crops('lfw', 128)
+# The shuffle and the per-identity choice run over the whole pool, so a different crop
+# count silently yields entirely different splits, and this script overwrites splits/.
+assert len(pool_keys) == 12273, len(pool_keys)
 people = sorted(p for p in os.listdir(LFW) if not p.startswith('.'))
 by_id = {}
 for p in people:
-    kept = sorted(f for f in os.listdir(os.path.join(LFW, p)) if key(p + '/' + f) in pool_keys)
+    kept = sorted(f for f in os.listdir(os.path.join(LFW, p))
+                  if os.path.splitext(p + '__' + f)[0] + '.png' in pool_keys)
     if kept:
         by_id[p] = kept
 
@@ -66,6 +66,7 @@ print('     K = ceil(0.5%%)     : %d' % -(-len(gallery) * 5 // 1000))
 
 # ---------------- FFHQ ----------------
 names = sorted(crops('ffhq', 224) & crops('ffhq', 128))
+assert len(names) == 68281, len(names)
 rng = random.Random(SEED)
 shuffled = names[:]
 rng.shuffle(shuffled)

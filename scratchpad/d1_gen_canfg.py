@@ -26,7 +26,8 @@ PRE = '/raid/wg25r/redteam_work/canfg_premodels/extracted'
 CANFG = '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/methods/canfg'
 WORK = '/raid/wg25r/redteam_work'
 sys.path.insert(0, CANFG)
-os.chdir(PRE)                      # CanFG.py does torch.load('premodels/...')
+sys.path.insert(0, PRE)            # CanFG.py does `from premodels.irse import Backbone`
+os.chdir(PRE)                      # and torch.load('premodels/...') with a relative path
 from CanFG import Generator
 
 CKPT = {
