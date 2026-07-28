@@ -14,7 +14,9 @@ K = ceil(0.005 * |gallery|). Both readings of the top-K number are reported:
   topK_recall |topK cap same_id| / |same_id in gallery| -- what fraction of them did
 avg_rank is normalised by |gallery| (perfect ~1/|gallery|, random ~0.5).
 
-Usage: python g1_eval.py {perceptface|canfg|canfg_ano|tipim} {100|200|500|2000}
+Usage: python g1_eval.py {perceptface|canfg|canfg_ano|tipim} {100|200|500|2000} [distill|converge]
+  distill   (default) the fixed-5000-step student, ckpt/distill_<m>_<n>/ckpt.pt
+  converge  the early-stopped best-val student, ckpt/converge_<m>_<n>/best.pt
 """
 import os
 import sys
@@ -28,6 +30,9 @@ from adaface_wrap import load_adaface, read_112
 
 WORK = '/raid/wg25r/redteam_work'
 METHOD, NPAIRS = sys.argv[1], int(sys.argv[2])
+KIND = sys.argv[3] if len(sys.argv) > 3 else 'distill'
+CKPT = {'distill': '%s/ckpt/distill_%s_%d/ckpt.pt', 'converge': '%s/ckpt/converge_%s_%d/best.pt'}
+TAG = {'distill': '', 'converge': '_converge'}
 device = 'cuda'
 
 gal_rel = sorted(open(WORK + '/splits/lfw_gallery.txt').read().split())
@@ -42,7 +47,7 @@ print('gallery %d, query %d, K %d' % (len(gal_rel), len(qry_rel), K), flush=True
 teacher = load_adaface(device)
 teacher.requires_grad_(False)
 student = load_adaface(device)
-ck = torch.load('%s/ckpt/distill_%s_%d/ckpt.pt' % (WORK, METHOD, NPAIRS),
+ck = torch.load(CKPT[KIND] % (WORK, METHOD, NPAIRS),
                 map_location='cpu', weights_only=False)
 student.load_state_dict(ck['student'])
 student.eval()
@@ -67,7 +72,7 @@ rows = {
     'upper bound': embed(teacher, WORK + '/crops/lfw/112', qry_name),
 }
 
-res = {'method': METHOD, 'n_pairs': NPAIRS, 'gallery': len(gal_rel),
+res = {'method': METHOD, 'n_pairs': NPAIRS, 'kind': KIND, 'gallery': len(gal_rel),
        'query': len(qry_rel), 'K': K, 'student_step': ck['step']}
 Gt = torch.from_numpy(G).to(device)
 for label, Q in rows.items():
@@ -95,5 +100,6 @@ for label, Q in rows.items():
              res[label]['avg_rank_best'], res[label]['avg_rank_all']), flush=True)
 
 os.makedirs(WORK + '/results', exist_ok=True)
-json.dump(res, open('%s/results/retrieval_%s_%d.json' % (WORK, METHOD, NPAIRS), 'w'), indent=2)
-print('-> %s/results/retrieval_%s_%d.json' % (WORK, METHOD, NPAIRS))
+out = '%s/results/retrieval_%s_%d%s.json' % (WORK, METHOD, NPAIRS, TAG[KIND])
+json.dump(res, open(out, 'w'), indent=2)
+print('-> ' + out)
