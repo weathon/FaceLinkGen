@@ -18,6 +18,9 @@ N_ATTACK = 2000
 
 os.makedirs(OUT, exist_ok=True)
 names = sorted(os.listdir(CROPS))
+# The shuffle is over the whole list, so a different crop count silently yields entirely
+# different splits. 73098 FFHQ images minus the 2659 SCRFD found no face in.
+assert len(names) == 70439, len(names)
 rng = random.Random(SEED)
 shuffled = names[:]
 rng.shuffle(shuffled)

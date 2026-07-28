@@ -13,7 +13,6 @@ Usage: python c2_crop_128.py {ffhq|lfw}
 """
 import os
 import sys
-import numpy as np
 from PIL import Image
 
 sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/methods/canfg/data_pre-processing')
