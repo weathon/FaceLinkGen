@@ -27,10 +27,16 @@ for STAGE in 1 2; do
     SCRIPT=$S/d3_pf_stage1.py
     [ $STAGE -eq 2 ] && SCRIPT=$S/d4_pf_stage2.py
     CK=/raid/wg25r/redteam_work/ckpt/pf_stage$STAGE/ckpt.pt
-    while [ "$(step_of $CK)" -lt $TOTAL ]; do
-        echo "=== stage$STAGE from step $(step_of $CK) $(date)"
+    # set -e does not apply to a `while` condition, so a step_of that dies (truncated
+    # ckpt -- torch.save is not atomic and this design is kill-and-relaunch) would make
+    # the test error out and the loop exit as if the stage were finished. Check explicitly.
+    while true; do
+        CUR=$(step_of $CK)
+        case "$CUR" in ''|*[!0-9]*) echo "step_of $CK returned '$CUR'"; exit 1;; esac
+        [ "$CUR" -ge $TOTAL ] && break
+        echo "=== stage$STAGE from step $CUR $(date)"
         $PY $SCRIPT >> $L/d_pf_stage$STAGE.log 2>&1
-        echo "=== stage$STAGE now at step $(step_of $CK) $(date)"
     done
+    echo "=== stage$STAGE done at step $CUR $(date)"
 done
 echo "=== PF ALL DONE $(date)"

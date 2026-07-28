@@ -128,23 +128,32 @@ while not stop:
                                  for k in (-3, -2, -1)]).mean()
         loss_G = loss_adv + LAMBDA_ID * loss_id + LAMBDA_ATTR * loss_attr
 
+        # L_fus is only computed on half the steps, so it is only reported on those steps.
+        # Reading it unconditionally logs the previous step's value on odd steps and
+        # NameErrors outright when a resume starts on an odd step.
+        fus = None
         if step % 2 == 0:
             recon = netG(real, arc)
             loss_fus = F.l1_loss(recon, real)
             loss_G = loss_G + LAMBDA_FUS * loss_fus
+            fus = loss_fus.item()
         opt_G.zero_grad(set_to_none=True)
         loss_G.backward()
         opt_G.step()
 
-        wandb.log({'step': step, 'loss_D': loss_D.item(), 'gp': gp.item(),
-                   'loss_adv': loss_adv.item(), 'loss_id': loss_id.item(),
-                   'loss_attr': loss_attr.item(), 'loss_fus': loss_fus.item()})
+        logd = {'step': step, 'loss_D': loss_D.item(), 'gp': gp.item(),
+                'loss_adv': loss_adv.item(), 'loss_id': loss_id.item(),
+                'loss_attr': loss_attr.item()}
+        if fus is not None:
+            logd['loss_fus'] = fus
+        wandb.log(logd)
         step += 1
 
         if step % 1000 == 0:
-            print('step %d  D %.3f  adv %.3f  id %.4f  attr %.4f  fus %.4f  (%.0f s)'
+            print('step %d  D %.3f  adv %.3f  id %.4f  attr %.4f  fus %s  (%.0f s)'
                   % (step, loss_D.item(), loss_adv.item(), loss_id.item(),
-                     loss_attr.item(), loss_fus.item(), time.time() - t0), flush=True)
+                     loss_attr.item(), 'n/a' if fus is None else '%.4f' % fus,
+                     time.time() - t0), flush=True)
             with torch.no_grad():
                 netG.eval()
                 grid = torch.cat([real[:8], netG(real[:8], torch.roll(arc[:8], 1, dims=0)),
