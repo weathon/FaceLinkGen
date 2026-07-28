@@ -53,7 +53,14 @@ mtcnn = MTCNN()
 skipped = []
 for i, rel in enumerate(todo):
     img = Image.open(os.path.join(SRC, rel)).convert('RGB')
-    faces = mtcnn.align_multi(img, min_face_size=64, crop_size=(128, 128))
+    # Upstream detect_faces does np.vstack on the P-Net output list without checking it,
+    # so "no face at any scale" surfaces as ValueError: need at least one array to
+    # concatenate, never as its own len(landmarks)==0 branch. That ValueError IS the
+    # zero-detection signal. Nothing else is caught.
+    try:
+        faces = mtcnn.align_multi(img, min_face_size=64, crop_size=(128, 128))
+    except ValueError:
+        faces = None
     if faces is None or len(faces) != 1:
         n = 0 if faces is None else len(faces)
         skipped.append(rel)
