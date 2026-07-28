@@ -23,7 +23,7 @@ import torch
 WORK = '/raid/wg25r/redteam_work'
 PRE = WORK + '/canfg_premodels/extracted'
 sys.path.insert(0, PRE)
-sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/scratchpad')
+sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/attacks/deid_linkage')
 from premodels.irse import Backbone
 from adaface_wrap import load_adaface
 

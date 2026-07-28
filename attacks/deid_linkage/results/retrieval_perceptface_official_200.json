@@ -1,0 +1,36 @@
+{
+  "method": "perceptface_official",
+  "n_pairs": 200,
+  "kind": "distill",
+  "gallery": 10723,
+  "query": 1550,
+  "K": 54,
+  "student_step": 5000,
+  "before attack": {
+    "top1_hit": 0.06064516129032258,
+    "topK_hit": 0.33548387096774196,
+    "topK_recall": 0.23327810110196204,
+    "avg_rank_best": 0.10748586848288123,
+    "avg_rank_all": 0.14046876033615746,
+    "median_rank_best": 0.019257670428051852,
+    "median_rank_best_raw": 206.5
+  },
+  "after attack": {
+    "top1_hit": 0.7580645161290323,
+    "topK_hit": 0.9335483870967742,
+    "topK_recall": 0.899234528170098,
+    "avg_rank_best": 0.01277507197371944,
+    "avg_rank_all": 0.017981503508397424,
+    "median_rank_best": 9.325748391308402e-05,
+    "median_rank_best_raw": 1.0
+  },
+  "upper bound": {
+    "top1_hit": 0.9593548387096774,
+    "topK_hit": 0.9683870967741935,
+    "topK_recall": 0.9566540487226778,
+    "avg_rank_best": 0.012647279137699188,
+    "avg_rank_all": 0.01771862106877617,
+    "median_rank_best": 9.325748391308402e-05,
+    "median_rank_best_raw": 1.0
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "method": "tipim",
+  "n_pairs": 2000,
+  "kind": "converge",
+  "before attack": {
+    "avg_cos_genuine": 0.2101493626832962,
+    "avg_cos_impostor": 0.0013058584881946445,
+    "median_cos_genuine": 0.21007055044174194
+  },
+  "after attack": {
+    "avg_cos_genuine": 0.4845430850982666,
+    "avg_cos_impostor": 0.00235611735843122,
+    "median_cos_genuine": 0.5016090273857117
+  },
+  "upper bound": {
+    "avg_cos_genuine": 0.660936713218689,
+    "avg_cos_impostor": 0.003487414913251996,
+    "median_cos_genuine": 0.6871107220649719
+  }
+}

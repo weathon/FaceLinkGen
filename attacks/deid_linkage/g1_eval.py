@@ -25,7 +25,7 @@ import math
 import torch
 import numpy as np
 
-sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/scratchpad')
+sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/attacks/deid_linkage')
 from adaface_wrap import load_adaface, read_112
 
 WORK = '/raid/wg25r/redteam_work'

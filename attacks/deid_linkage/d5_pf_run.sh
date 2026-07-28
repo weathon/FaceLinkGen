@@ -8,7 +8,7 @@ set -e
 export PYTHONPATH=/home/wg25r/face_deid/PerceptFace/pylibs
 export CUDA_VISIBLE_DEVICES=${GPU:?set GPU}
 PY=/home/wg25r/face_deid/.venv/bin/python
-S=/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/scratchpad
+S=/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/attacks/deid_linkage
 L=/raid/wg25r/redteam_work/logs
 TOTAL=400000
 

@@ -1,0 +1,36 @@
+{
+  "method": "canfg_ano",
+  "n_pairs": 200,
+  "kind": "converge",
+  "gallery": 10723,
+  "query": 1550,
+  "K": 54,
+  "student_step": 500,
+  "before attack": {
+    "top1_hit": 0.05161290322580645,
+    "topK_hit": 0.20967741935483872,
+    "topK_recall": 0.1578653237372432,
+    "avg_rank_best": 0.23972810930980434,
+    "avg_rank_all": 0.2731504592230181,
+    "median_rank_best": 0.09983213652895645,
+    "median_rank_best_raw": 1070.5
+  },
+  "after attack": {
+    "top1_hit": 0.327741935483871,
+    "topK_hit": 0.687741935483871,
+    "topK_recall": 0.6014137486601858,
+    "avg_rank_best": 0.04287858778086295,
+    "avg_rank_all": 0.056655678859026205,
+    "median_rank_best": 0.0005595449034785042,
+    "median_rank_best_raw": 6.0
+  },
+  "upper bound": {
+    "top1_hit": 0.9593548387096774,
+    "topK_hit": 0.9683870967741935,
+    "topK_recall": 0.9566540487226778,
+    "avg_rank_best": 0.012647279137699188,
+    "avg_rank_all": 0.01771862106877617,
+    "median_rank_best": 9.325748391308402e-05,
+    "median_rank_best_raw": 1.0
+  }
+}

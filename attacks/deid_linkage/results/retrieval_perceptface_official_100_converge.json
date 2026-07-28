@@ -1,0 +1,36 @@
+{
+  "method": "perceptface_official",
+  "n_pairs": 100,
+  "kind": "converge",
+  "gallery": 10723,
+  "query": 1550,
+  "K": 54,
+  "student_step": 1000,
+  "before attack": {
+    "top1_hit": 0.06064516129032258,
+    "topK_hit": 0.33548387096774196,
+    "topK_recall": 0.23327810110196204,
+    "avg_rank_best": 0.10748586848288123,
+    "avg_rank_all": 0.14046876033615746,
+    "median_rank_best": 0.019257670428051852,
+    "median_rank_best_raw": 206.5
+  },
+  "after attack": {
+    "top1_hit": 0.6148387096774194,
+    "topK_hit": 0.8864516129032258,
+    "topK_recall": 0.8335013351367389,
+    "avg_rank_best": 0.018981447777313164,
+    "avg_rank_all": 0.02414044984625781,
+    "median_rank_best": 9.325748391308402e-05,
+    "median_rank_best_raw": 1.0
+  },
+  "upper bound": {
+    "top1_hit": 0.9593548387096774,
+    "topK_hit": 0.9683870967741935,
+    "topK_recall": 0.9566540487226778,
+    "avg_rank_best": 0.012647279137699188,
+    "avg_rank_all": 0.01771862106877617,
+    "median_rank_best": 9.325748391308402e-05,
+    "median_rank_best_raw": 1.0
+  }
+}
