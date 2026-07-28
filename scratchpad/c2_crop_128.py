@@ -15,8 +15,12 @@ import os
 import sys
 from PIL import Image
 
-sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/methods/canfg/data_pre-processing')
-sys.path.insert(0, '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/methods/canfg/data_pre-processing/mtcnn_pytorch')
+CANFG_PRE = '/home/wg25r/face_deid/PerceptFace/upstream/FaceLinkGen/methods/canfg/data_pre-processing'
+sys.path.insert(0, CANFG_PRE)
+sys.path.insert(0, CANFG_PRE + '/mtcnn_pytorch')
+# get_nets.py loads its weights from the relative path 'mtcnn_pytorch/src/weights/*.npy',
+# so this has to run from that directory. Every other path here is absolute.
+os.chdir(CANFG_PRE)
 from mtcnn import MTCNN
 
 WORK = '/raid/wg25r/redteam_work'
