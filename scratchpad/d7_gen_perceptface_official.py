@@ -98,7 +98,12 @@ for ds, split in JOBS:
             fake = netG(imgs, T_id)
             out = fake * imagenet_std + imagenet_mean
             for j, nm in enumerate(batch_names):
-                vutils.save_image(out[j], os.path.join(dst, nm), nrow=1)
+                # Write then rename: save_image is not atomic and resume skips by file
+                # existence, so a kill mid-write would leave a truncated PNG that is
+                # skipped forever and consumed downstream as a valid protected image.
+                tmp_path = os.path.join(dst, nm + '.part.png')
+                vutils.save_image(out[j], tmp_path, nrow=1)
+                os.replace(tmp_path, os.path.join(dst, nm))
             done += len(batch_names)
             if done % 1600 < 32:
                 print('  %d/%d' % (done, len(todo)), flush=True)
