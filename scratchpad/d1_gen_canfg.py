@@ -52,7 +52,7 @@ tf = transforms.Compose([transforms.ToTensor(),
 JOBS = [
     ('ffhq', WORK + '/splits/ffhq_attack_2000.txt'),
     ('ffhq', WORK + '/splits/ffhq_gate_val.txt'),
-    ('lfw', WORK + '/splits/lfw_gallery.txt'),
+    ('lfw', WORK + '/splits/lfw_query.txt'),
 ]
 
 
