@@ -29,6 +29,11 @@ BATCH, LR, WD, MARGIN = 32, 1e-5, 2e-2, 0.3
 EVAL_EVERY, PATIENCE, MAX_STEPS = 500, 10, 50000
 OUT = '%s/ckpt/converge_%s_%d' % (WORK, METHOD, NPAIRS)
 os.makedirs(OUT, exist_ok=True)
+if os.path.exists(OUT + '/summary.json'):
+    # Resuming a finished config would re-enter the loop with bad >= PATIENCE already
+    # true, train another EVAL_EVERY steps and rewrite summary.json.
+    print('already finished: ' + open(OUT + '/summary.json').read(), flush=True)
+    raise SystemExit(0)
 device = 'cuda'
 torch.manual_seed(0)
 random.seed(0)
