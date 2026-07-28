@@ -56,7 +56,10 @@ def embed(root):
             if img is None:
                 raise RuntimeError('unreadable: ' + os.path.join(root, n))
             imgs.append(cv2.resize(img, (112, 112), interpolation=cv2.INTER_LINEAR))
-        bgr = torch.from_numpy(np.stack(imgs)).permute(0, 3, 1, 2).float().to(device)
+        # .contiguous(): permute keeps a non-contiguous stride that survives the arithmetic
+        # and reaches premodels/irse.py Flatten, whose .view() then raises. Upstream feeds
+        # transforms.ToTensor() output, which is contiguous NCHW.
+        bgr = torch.from_numpy(np.stack(imgs)).permute(0, 3, 1, 2).contiguous().float().to(device)
         bgr = (bgr / 255.0 - 0.5) / 0.5
         with torch.no_grad():
             arc.append(torch.nn.functional.normalize(arcface(bgr.flip(1)), dim=1).cpu().numpy())

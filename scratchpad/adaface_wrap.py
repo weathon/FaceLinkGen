@@ -38,4 +38,4 @@ def read_112(path):
         raise RuntimeError('unreadable image: ' + path)
     if img.shape[:2] != (112, 112):
         img = cv2.resize(img, (112, 112), interpolation=cv2.INTER_LINEAR)
-    return torch.from_numpy(((img / 255.0) - 0.5) / 0.5).permute(2, 0, 1).float()
+    return torch.from_numpy(((img / 255.0) - 0.5) / 0.5).permute(2, 0, 1).contiguous().float()
