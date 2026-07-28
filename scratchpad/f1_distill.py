@@ -73,14 +73,14 @@ student = load_adaface(device).train()
 opt = torch.optim.AdamW(student.parameters(), lr=LR, weight_decay=WD)
 
 step = 0
+hist = []
 if os.path.exists(OUT + '/ckpt.pt'):          # resume state; absent on the first run
     ck = torch.load(OUT + '/ckpt.pt', map_location='cpu', weights_only=False)
     student.load_state_dict(ck['student'])
     opt.load_state_dict(ck['opt'])
     step = ck['step']
+    hist = json.load(open(OUT + '/history.json'))   # else the pre-resume curve is overwritten
     print('resumed at step %d' % step, flush=True)
-
-hist = []
 while step < STEPS:
     for x, idx in loader:
         s = student(x.to(device, non_blocking=True))[0]
