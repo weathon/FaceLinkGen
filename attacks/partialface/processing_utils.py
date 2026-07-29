@@ -77,9 +77,10 @@ def idct_transform(x, size=8, stride=8, pad=0, dilation=1, ratio=8):
     return x
 
 
-def create_channel_subsets(x, chs_prune=None, selection=None, n_subset=6):
+def create_channel_subsets(x, chs_prune=None, selection=None, n_subset=6, fixed_channel=True):
     """
         Turn spatial images into subsets of frequency channels
+        Random mode draws one new channel partition for the whole input batch.
     """
 
     # low-frequency channels to prune
@@ -93,12 +94,15 @@ def create_channel_subsets(x, chs_prune=None, selection=None, n_subset=6):
     #   each of its row indicates a specific selection S
     #   only one subset is later chosen and permuted
     if selection is None:
-        selection = torch.tensor([[1, 24, 28, 12, 32, 45, 47, 40, 52],
-                                  [35, 39, 44, 42, 10, 4, 37, 31, 53],
-                                  [0, 50, 19, 6, 22, 51, 49, 23, 21],
-                                  [38, 8, 25, 13, 17, 30, 7, 33, 9],
-                                  [26, 29, 16, 2, 43, 14, 5, 11, 48],
-                                  [36, 41, 46, 34, 15, 27, 18, 20, 3]])
+        if fixed_channel:
+            selection = torch.tensor([[1, 24, 28, 12, 32, 45, 47, 40, 52],
+                                      [35, 39, 44, 42, 10, 4, 37, 31, 53],
+                                      [0, 50, 19, 6, 22, 51, 49, 23, 21],
+                                      [38, 8, 25, 13, 17, 30, 7, 33, 9],
+                                      [26, 29, 16, 2, 43, 14, 5, 11, 48],
+                                      [36, 41, 46, 34, 15, 27, 18, 20, 3]])
+        else:
+            selection = torch.randperm(54).reshape(n_subset, 9)
         assert selection.shape[0] == n_subset
 
     # turn the spatial image into frequency channels, where low-frequency channels are pruned
@@ -122,10 +126,11 @@ def create_channel_subsets(x, chs_prune=None, selection=None, n_subset=6):
     return x_freq
 
 
-def form_training_batch(inputs, labels):
+def form_training_batch(inputs, labels, fixed_channel=True):
     """
         Create the training batch of random subsets of frequency channels
         from the standard inputs of spatial images
+        Random mode draws one new channel partition for the whole input batch.
     """
 
     b, _, _, _ = inputs.shape
@@ -153,7 +158,9 @@ def form_training_batch(inputs, labels):
     label_idx_mod = [int(labels[i]) % len(choice_index) for i in range(b)]
     idx_within_choice = torch.randint(high=len(choice_index[0]), size=(b,)).tolist()
     split_idx = [i + b * choice_index[label_idx_mod[i]][idx_within_choice[i]] for i in range(b)]
-    input_splits = create_channel_subsets(inputs, n_subset=6)[split_idx]
+    input_splits = create_channel_subsets(
+        inputs, n_subset=6, fixed_channel=fixed_channel
+    )[split_idx]
 
     # sample-wisely permute the order of channels
     ig_perm_idx = torch.randint(high=len(candidate_permutations), size=(input_splits.shape[0],))

@@ -61,8 +61,10 @@ def seed_everything(seed=42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     
-def preprocess_and_return(pil_image, label, image_size=112, transform=None):
-    seed_everything()
+def preprocess_and_return(pil_image, label, image_size=112, transform=None, fixed_channel=True):
+    """Return one FracFace template, optionally fixing the random FSM with seed 42."""
+    if fixed_channel:
+        seed_everything()
     img = pil_image.convert('RGB')
     img = img.resize((image_size, image_size))
     img_array = np.asarray(img).copy()
@@ -159,4 +161,3 @@ if __name__ == "__main__":
 
     # Output the number of files generated
     print(f"Total missing .npy files generated: {missing_count}")
-
