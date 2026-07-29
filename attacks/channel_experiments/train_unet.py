@@ -16,10 +16,10 @@ from tqdm import tqdm
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(ROOT, "methods", "fracface"))
 sys.path.insert(0, os.path.join(ROOT, "methods", "minusface"))
 sys.path.insert(0, os.path.join(ROOT, "third_party", "tface", "recognition"))
 sys.path.insert(0, os.path.join(ROOT, "attacks", "partialface"))
+sys.path.insert(0, os.path.join(ROOT, "methods", "fracface"))
 
 import data2npy
 import processing_utils
