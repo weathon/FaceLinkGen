@@ -19,9 +19,8 @@ md_dir.mkdir(exist_ok=True)
 client = DatalabClient()
 options = ConvertOptions(
     output_format="markdown",
-    mode="fast",
+    mode="balanced",
     paginate=True,
-    token_efficient_markdown=True,
 )
 
 for pdf_path in pdf_paths:
