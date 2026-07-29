@@ -3,8 +3,8 @@ from torch.utils.data import Dataset
 import numpy as np
 import os
 
-from methods.fracface_fixed.utils.dct_utils import dct_transform
-from methods.fracface_fixed.utils.fractal_utils import (
+from utils.dct_utils import dct_transform
+from utils.fractal_utils import (
     generate_fsm, apply_fractal_transform,
     generate_snake_indices, form_training_batch_with_fractal,
     create_square_subsets

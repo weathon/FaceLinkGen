@@ -73,19 +73,6 @@ def create_square_subsets(x, chs_prune_per_layer=None):
     return part1, part2
 
 
-def randomize_A1(rng):
-    """
-    Randomly generate a base 3x3 matrix A1 with values in [1, 9].
-    Used as the foundation for building fractal index matrices.
-
-    Returns:
-        A1 (np.ndarray): A 3x3 matrix with random integers.
-    """
-    M0 = rng.randint(1, 10, size=(3, 3))
-    L0 = rng.permutation(9).reshape(3, 3)
-    return M0.flatten()[L0.flatten()].reshape(3, 3)
-
-
 def generate_fsm(rng):
     """
     Generate a fractal structure matrix (FSM) by recursively expanding a random base matrix.
@@ -97,7 +84,9 @@ def generate_fsm(rng):
     Returns:
         E (list[np.ndarray]): List of fractal index matrices from each iteration.
     """
-    M0 = randomize_A1(rng)
+    M0 = rng.randint(1, 10, size=(3, 3))
+    L0 = rng.permutation(9).reshape(3, 3)
+    M0 = M0.flatten()[L0.flatten()].reshape(3, 3)
     F1 = np.zeros((9, 9), dtype=int)
     for i in range(9):
         for j in range(9):
