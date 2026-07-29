@@ -47,7 +47,6 @@ def compare_facepp(generated, real, source, image_index):
             },
             timeout=60,
         )
-        response.raise_for_status()
         result = response.json()
         if (
             "error_message" in result
@@ -56,6 +55,7 @@ def compare_facepp(generated, real, source, image_index):
             print("Face++ concurrency limit; retrying source=%s" % source, flush=True)
             time.sleep(2)
             continue
+        response.raise_for_status()
         if "error_message" in result:
             raise RuntimeError(
                 "Face++ source=%s generation=%d error=%s" % (

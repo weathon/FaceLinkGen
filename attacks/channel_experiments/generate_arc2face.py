@@ -82,7 +82,7 @@ def main():
         images = pipeline(
             prompt_embeds=prompt_embeddings,
             num_inference_steps=25,
-            guidance_scale=2.5,
+            guidance_scale=3.0,
             num_images_per_prompt=5,
         ).images
 

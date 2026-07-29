@@ -194,9 +194,15 @@ def main():
                         maximum = attack_input.amax(
                             dim=(1, 2, 3), keepdim=True
                         )
+                        if torch.any(maximum == minimum):
+                            raise RuntimeError(
+                                "constant PartialFace attack input for %s" % (
+                                    list(source_paths),
+                                )
+                            )
                         attack_input = (
                             attack_input - minimum
-                        ) / (maximum - minimum + 1e-5)
+                        ) / (maximum - minimum)
                 else:
                     attack_input = conversion_model(raw)[5].float()
                     minimum = attack_input.amin(
@@ -205,9 +211,15 @@ def main():
                     maximum = attack_input.amax(
                         dim=(1, 2, 3), keepdim=True
                     )
+                    if torch.any(maximum == minimum):
+                        raise RuntimeError(
+                            "constant MinusFace attack input for %s" % (
+                                list(source_paths),
+                            )
+                        )
                     attack_input = (
                         attack_input - minimum
-                    ) / (maximum - minimum + 1e-6)
+                    ) / (maximum - minimum)
                     attack_input = (attack_input - 0.5) / 0.5
 
             outputs = model(attack_input).detach().cpu()

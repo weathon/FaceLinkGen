@@ -164,7 +164,7 @@ def main():
                 protected = protected.to(device)
                 raw = raw.to(device)
             else:
-                _, raw = batch
+                filenames, raw = batch
                 raw = raw.to(device)
                 if args.method == "partialface":
                     protected = processing_utils.form_training_batch(
@@ -177,9 +177,15 @@ def main():
                         protected = conversion_model(raw)[5].float()
                     minimum = protected.amin(dim=(1, 2, 3), keepdim=True)
                     maximum = protected.amax(dim=(1, 2, 3), keepdim=True)
+                    if torch.any(maximum == minimum):
+                        raise RuntimeError(
+                            "constant MinusFace U-Net input for %s" % (
+                                list(filenames),
+                            )
+                        )
                     protected = (
                         protected - minimum
-                    ) / (maximum - minimum + 1e-6)
+                    ) / (maximum - minimum)
                     protected = (protected - 0.5) / 0.5
 
             prediction = model(protected)

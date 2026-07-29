@@ -159,7 +159,7 @@ def main():
         progress = tqdm(loader, desc="ours %s %s epoch %d" % (
             args.method, args.channel_mode, epoch
         ))
-        for _, teacher, attack_input in progress:
+        for filenames, teacher, attack_input in progress:
             teacher = teacher.to(device)
 
             if args.method == "partialface":
@@ -174,9 +174,15 @@ def main():
                 ).repeat(1, 3, 1, 1)
                 minimum = attack_input.amin(dim=(1, 2, 3), keepdim=True)
                 maximum = attack_input.amax(dim=(1, 2, 3), keepdim=True)
+                if torch.any(maximum == minimum):
+                    raise RuntimeError(
+                        "constant PartialFace attack input for %s" % (
+                            list(filenames),
+                        )
+                    )
                 attack_input = (
                     attack_input - minimum
-                ) / (maximum - minimum + 1e-5)
+                ) / (maximum - minimum)
             elif args.method == "minusface":
                 with torch.no_grad():
                     attack_input = conversion_model(
@@ -184,9 +190,15 @@ def main():
                     )[5].float()
                 minimum = attack_input.amin(dim=(1, 2, 3), keepdim=True)
                 maximum = attack_input.amax(dim=(1, 2, 3), keepdim=True)
+                if torch.any(maximum == minimum):
+                    raise RuntimeError(
+                        "constant MinusFace attack input for %s" % (
+                            list(filenames),
+                        )
+                    )
                 attack_input = (
                     attack_input - minimum
-                ) / (maximum - minimum + 1e-6)
+                ) / (maximum - minimum)
                 attack_input = (attack_input - 0.5) / 0.5
             else:
                 attack_input = attack_input.to(device)
