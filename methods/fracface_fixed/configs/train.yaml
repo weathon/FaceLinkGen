@@ -1,0 +1,51 @@
+# ======= Basic Training Configuration =======
+SEED:                        # Random seed for reproducibility
+START_EPOCH:                 # Starting epoch for training (useful for resuming)
+NUM_EPOCH:                   # Total number of training epochs
+NUM_CLASSES:                 # Number of distinct identities (classes)
+EMBEDDING_SIZE:              # Output dimensionality of the face embedding
+INPUT_SIZE: [112, 112]       # Input image resolution (Height x Width)
+LR:                          # Initial learning rate
+
+# ======= Path Configuration =======
+DATA_ROOT: '/path/to/your/image.jpg'        # Root directory of the training dataset
+INDEX_ROOT: '/path/to/your/index.txt'       # Path to training index (mapping image paths to identity labels)
+TEST_DATA_ROOT: '/path/to/your/image.jpg'   # Root directory of the test dataset
+TEST_INDEX_ROOT: '/path/to/your/index.txt'  # Path to test index (for evaluation)
+
+# ======= Dataset Configuration =======
+DATASETS:
+  - name: 'ms1m'              # Name of the dataset (e.g., MS-Celeb-1M)
+    batch_size:               # Batch size for training (to be defined)
+    weight:                   # Loss weight for this dataset (optional multi-dataset training)
+    scale:                    # Scaling factor in margin-based loss (e.g., ArcFace scale s)
+    margin:                   # Margin value in margin-based loss (e.g., ArcFace margin m)
+
+# ======= Model Configuration =======
+BACKBONE_NAME: ''             # Backbone network (e.g., 'IR_18', 'IR_50')
+HEAD_NAME: ''                 # Classification head type (e.g., 'ArcFace', 'CosFace', 'CurricularFace')
+LOSS_NAME: ''                 # Loss function used for training (e.g., 'DistCrossEntropy', 'Softmax')
+EMBEDDING_SIZE:               # Optional: specify again if overridden (should match above)
+
+# ======= Optimizer & Learning Rate Scheduler =======
+LRS: [0.1, 0.01, 0.001, 0.0001]  # Multi-stage learning rates (usually adjusted at fixed epochs)
+WEIGHT_DECAY: 0.0005             # L2 regularization factor
+MOMENTUM: 0.9                    # Momentum factor for SGD optimizer
+
+# ======= Model Checkpointing =======
+SAVE_EPOCHS: [1, 10, 20, 30, 40, 50]  # Epochs at which the model checkpoints will be saved
+
+# ======= Distributed Training (set to default for single GPU) =======
+WORLD_SIZE: 1                 # Total number of processes (GPUs) for distributed training
+RANK: 0                       # Rank of the current process
+LOCAL_RANK: 0                 # Local device ID (used with distributed launcher)
+DIST_BACKEND: 'nccl'          # Backend for distributed training (NCCL for NVIDIA GPUs)
+DIST_URL: 'env://'            # Initialization method for distributed training
+
+# ======= Data Loader Configuration =======
+NUM_WORKERS: 8                # Number of worker processes for data loading
+AMP: false                    # Enable Automatic Mixed Precision (AMP) training for faster performance and lower memory usage
+
+# ======= Image Normalization Parameters =======
+RGB_MEAN: [0.5, 0.5, 0.5]     # Mean for RGB normalization (per channel)
+RGB_STD: [0.5, 0.5, 0.5]      # Standard deviation for RGB normalization (per channel)
