@@ -30,6 +30,6 @@ for pdf_path in pdf_paths:
         continue
 
     print(f"Converting {pdf_path} -> {md_path}")
-    result = client.convert(pdf_path, options=options, poll_interval=10)
+    result = client.convert(pdf_path, options=options, poll_interval=60)
     md_path.write_text(result.markdown, encoding="utf-8")
     print(f"Saved {md_path} ({len(result.markdown):,} characters)")
