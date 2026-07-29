@@ -1,4 +1,4 @@
-"""Evaluate 300 identities with Face++ and Amazon, reporting at-least-one."""
+"""Evaluate 300 single reconstructions with Face++ and Amazon."""
 
 import argparse
 import io
@@ -157,7 +157,7 @@ def main():
             )
             with open(complete_path) as f:
                 generated_paths = json.load(f)["images"]
-            assert len(generated_paths) == 5
+            assert len(generated_paths) == 1
         else:
             generated_paths = [input_record["output"]]
 

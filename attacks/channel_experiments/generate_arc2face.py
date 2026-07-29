@@ -1,4 +1,4 @@
-"""Generate five Arc2Face reconstructions for each saved student embedding."""
+"""Generate one Arc2Face reconstruction for each saved student embedding."""
 
 import argparse
 import json
@@ -66,6 +66,7 @@ def main():
             with open(complete_path) as f:
                 complete = json.load(f)
             assert complete["source"] == record["source"]
+            assert len(complete["images"]) == 1
             for image_path in complete["images"]:
                 assert os.path.exists(image_path)
             continue
@@ -83,7 +84,7 @@ def main():
             prompt_embeds=prompt_embeddings,
             num_inference_steps=25,
             guidance_scale=3.0,
-            num_images_per_prompt=5,
+            num_images_per_prompt=1,
         ).images
 
         image_paths = []
@@ -101,7 +102,7 @@ def main():
                 "images": image_paths,
             }, f, indent=2)
 
-    print("generated 5 images for %d identities in %s" % (
+    print("generated 1 image for %d identities in %s" % (
         len(records), args.output
     ), flush=True)
 

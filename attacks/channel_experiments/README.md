@@ -20,11 +20,10 @@ Each setting trains both attacks from the common pretrained models:
 
 `train_ours.py` and `train_unet.py` save every epoch and resume from
 `resume.pt`. `dump_reconstructions.py` writes every one of the 300 evaluation
-samples separately. `generate_arc2face.py` generates five faces per ours
-embedding and marks each identity complete on disk. `eval_apis.py` appends one
-raw-response record per identity and reports only Face++/Amazon at-least-one
-rates. U-Net has one reconstruction per identity, so its at-least-one rate is
-its single-reconstruction rate.
+samples separately. `generate_arc2face.py` generates one face per ours
+embedding, matching the single U-Net reconstruction per identity.
+`eval_apis.py` appends one raw-response record per identity and reports the
+single-image Face++/Amazon rates.
 
 FracFace fixed mode calls `seed_everything(42)` before constructing its FSM;
 random mode does not seed. PartialFace fixed mode uses the released hard-coded
