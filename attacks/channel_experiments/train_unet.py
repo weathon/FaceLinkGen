@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "methods", "minusface"))
 sys.path.insert(0, os.path.join(ROOT, "third_party", "tface", "recognition"))
 sys.path.insert(0, os.path.join(ROOT, "attacks", "partialface"))
@@ -23,6 +24,7 @@ sys.path.insert(0, os.path.join(ROOT, "methods", "fracface"))
 
 import data2npy
 import processing_utils
+from methods.fracface_fixed import data2npy as data2npy_fixed
 from minusface import MinusBackbone
 
 
@@ -48,12 +50,15 @@ class ReconstructionDataset(Dataset):
                 image, 1, fixed_channel=self.fixed_channel
             )[0]
             return path, protected, raw
+        if self.method == "fracface_fixed":
+            protected = data2npy_fixed.preprocess_fcr_and_return(image)[0]
+            return path, protected, raw
         return path, raw
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--method", required=True, choices=["fracface", "partialface", "minusface"])
+    parser.add_argument("--method", required=True, choices=["fracface", "fracface_fixed", "partialface", "minusface"])
     parser.add_argument("--channel-mode", required=True, choices=["fixed", "random"])
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--output", required=True)
@@ -87,6 +92,7 @@ def main():
 
     input_channels = {
         "fracface": 81,
+        "fracface_fixed": 81,
         "partialface": 27,
         "minusface": 3,
     }[args.method]
@@ -159,8 +165,14 @@ def main():
             args.method, args.channel_mode, epoch
         ))
         for batch in progress:
-            if args.method == "fracface":
+            if args.method in ["fracface", "fracface_fixed"]:
                 _, protected, raw = batch
+                if args.method == "fracface_fixed":
+                    protected = data2npy_fixed.form_training_batch_with_fractal(
+                        protected,
+                        [1] * protected.shape[0],
+                        fixed_channel=fixed_channel,
+                    )[0]
                 protected = protected.to(device)
                 raw = raw.to(device)
             else:

@@ -14,10 +14,18 @@ from skimage.metrics import structural_similarity
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CONFIGS = [
     ("fracface_fixed", "FracFace fixed"),
+    (
+        "fracface_fixed_implementation_fixed",
+        "FracFace-fixed implementation / fixed",
+    ),
     ("partialface_fixed", "PartialFace fixed"),
     (
         "fracface_random_train_fixed_test",
         "FracFace random train / fixed test",
+    ),
+    (
+        "fracface_fixed_implementation_random_train_fixed_test",
+        "FracFace-fixed implementation / random train / fixed test",
     ),
     (
         "partialface_random_train_fixed_test",

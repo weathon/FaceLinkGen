@@ -3,8 +3,8 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
-from utils.dct_utils import dct_transform
-from utils.fractal_utils import generate_snake_indices
+from methods.fracface_fixed.utils.dct_utils import dct_transform
+from methods.fracface_fixed.utils.fractal_utils import generate_snake_indices
 
 def create_square_subsets(x, chs_prune_per_layer=None):
     """

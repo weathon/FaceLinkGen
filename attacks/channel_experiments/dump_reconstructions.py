@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "methods", "minusface"))
 sys.path.insert(0, os.path.join(ROOT, "third_party", "tface", "recognition"))
 sys.path.insert(0, os.path.join(ROOT, "attacks", "partialface"))
@@ -24,6 +25,7 @@ sys.path.insert(0, os.path.join(ROOT, "methods", "fracface"))
 
 import data2npy
 import processing_utils
+from methods.fracface_fixed import data2npy as data2npy_fixed
 from minusface import MinusBackbone
 
 
@@ -50,13 +52,16 @@ class EvaluationDataset(Dataset):
                 image, 1, fixed_channel=self.fixed_channel
             )[0]
             return idx, path, protected, raw
+        if self.method == "fracface_fixed":
+            protected = data2npy_fixed.preprocess_fcr_and_return(image)[0]
+            return idx, path, protected, raw
         return idx, path, raw
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--attack", required=True, choices=["ours", "unet"])
-    parser.add_argument("--method", required=True, choices=["fracface", "partialface", "minusface"])
+    parser.add_argument("--method", required=True, choices=["fracface", "fracface_fixed", "partialface", "minusface"])
     parser.add_argument("--channel-mode", required=True, choices=["fixed", "random"])
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--checkpoint", required=True)
@@ -116,7 +121,7 @@ def main():
 
     if args.attack == "ours":
         backbone = convert(os.path.join(ROOT, "checkpoints", "model.onnx"))
-        if args.method == "fracface":
+        if args.method in ["fracface", "fracface_fixed"]:
             model = torch.nn.Sequential(
                 torch.nn.Conv2d(81, 3, kernel_size=3, padding=1),
                 backbone,
@@ -126,6 +131,7 @@ def main():
     else:
         input_channels = {
             "fracface": 81,
+            "fracface_fixed": 81,
             "partialface": 27,
             "minusface": 3,
         }[args.method]
@@ -161,8 +167,14 @@ def main():
     pending_offset = 0
     with torch.no_grad():
         for batch in tqdm(loader, desc="dump"):
-            if args.method == "fracface":
+            if args.method in ["fracface", "fracface_fixed"]:
                 _, source_paths, attack_input, raw = batch
+                if args.method == "fracface_fixed":
+                    attack_input = data2npy_fixed.form_training_batch_with_fractal(
+                        attack_input,
+                        [1] * attack_input.shape[0],
+                        fixed_channel=fixed_channel,
+                    )[0]
                 attack_input = attack_input.to(device)
                 raw = raw.to(device)
             else:

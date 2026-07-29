@@ -32,7 +32,7 @@ Make sure the dataset contains cleaned and aligned face images with proper ident
 2)	Data Processing
 First, in order to train more smoothly, make sure the size of the training/testing images is 112*112. Secondly, perform frequency domain transformation on the training/testing images. Then, perform the Frequency Channels Refining and Frequency Fractal Mapping operations on all channels based on the frequency domain. You can try running
  ```bash
-CUDA_VISIBLE_DEVICES=0 python data2npy.py
+CUDA_VISIBLE_DEVICES=0 python -m methods.fracface_fixed.data2npy
 
 ```  
 The processing flow of Frequency Channels Refining and Frequency Fractal Mapping can be referred to running

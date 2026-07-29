@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "methods", "minusface"))
 sys.path.insert(0, os.path.join(ROOT, "third_party", "tface", "recognition"))
 sys.path.insert(0, os.path.join(ROOT, "attacks", "partialface"))
@@ -26,6 +27,7 @@ sys.path.insert(0, os.path.join(ROOT, "methods", "fracface"))
 
 import data2npy
 import processing_utils
+from methods.fracface_fixed import data2npy as data2npy_fixed
 from minusface import MinusBackbone
 
 
@@ -59,6 +61,10 @@ class DistillationDataset(Dataset):
                 image, 1, fixed_channel=self.fixed_channel
             )[0]
             return path, teacher, protected
+        if self.method == "fracface_fixed":
+            image = Image.open(path).convert("RGB")
+            protected = data2npy_fixed.preprocess_fcr_and_return(image)[0]
+            return path, teacher, protected
 
         image = Image.open(path).convert("RGB")
         return path, teacher, self.to_tensor(image)
@@ -66,7 +72,7 @@ class DistillationDataset(Dataset):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--method", required=True, choices=["fracface", "partialface", "minusface"])
+    parser.add_argument("--method", required=True, choices=["fracface", "fracface_fixed", "partialface", "minusface"])
     parser.add_argument("--channel-mode", required=True, choices=["fixed", "random"])
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--output", required=True)
@@ -99,7 +105,7 @@ def main():
     ), flush=True)
 
     backbone = convert(os.path.join(ROOT, "checkpoints", "model.onnx"))
-    if args.method == "fracface":
+    if args.method in ["fracface", "fracface_fixed"]:
         student = torch.nn.Sequential(
             torch.nn.Conv2d(81, 3, kernel_size=3, padding=1),
             backbone,
@@ -156,7 +162,13 @@ def main():
         for filenames, teacher, attack_input in progress:
             teacher = teacher.to(device)
 
-            if args.method == "partialface":
+            if args.method == "fracface_fixed":
+                attack_input = data2npy_fixed.form_training_batch_with_fractal(
+                    attack_input,
+                    [1] * attack_input.shape[0],
+                    fixed_channel=fixed_channel,
+                )[0].to(device)
+            elif args.method == "partialface":
                 attack_input = attack_input.to(device)
                 attack_input = processing_utils.form_training_batch(
                     attack_input,

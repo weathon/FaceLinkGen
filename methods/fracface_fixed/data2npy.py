@@ -4,8 +4,8 @@ from PIL import Image
 import torch
 from tqdm import tqdm
 
-from utils.dct_utils import dct_transform
-from utils.fractal_utils import generate_fsm, apply_fractal_transform, generate_snake_indices, form_training_batch_with_fractal, create_square_subsets
+from .utils.dct_utils import dct_transform
+from .utils.fractal_utils import generate_fsm, apply_fractal_transform, generate_snake_indices, form_training_batch_with_fractal, create_square_subsets
 
 
 # Function to preprocess and save a single image or .npy file
@@ -34,7 +34,9 @@ def preprocess_and_save(image_path, label, save_path, image_size=112, transform=
             img_tensor = transform(img_tensor)
 
         part1, _ = create_square_subsets(img_tensor.unsqueeze(0))  # (1, 81, H, W)
-        inputs, _ = form_training_batch_with_fractal(part1, label)  # (1, 81, 112, 112)
+        inputs, _ = form_training_batch_with_fractal(
+            part1, label, fixed_channel=False
+        )  # (1, 81, 112, 112)
 
         assert not torch.isnan(inputs).any(), f"NaN in FSM output"
         assert not torch.isinf(inputs).any(), f"Inf in FSM output"
@@ -48,23 +50,8 @@ def preprocess_and_save(image_path, label, save_path, image_size=112, transform=
         pass
 
 
-import random
-def seed_everything(seed=42):
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    
-    # PyTorch
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    
 def preprocess_and_return(pil_image, label, image_size=112, transform=None, fixed_channel=True):
     """Return one FracFace template, optionally fixing the random FSM with seed 42."""
-    if fixed_channel:
-        seed_everything()
     img = pil_image.convert('RGB')
     img = img.resize((image_size, image_size))
     img_array = np.asarray(img).copy()
@@ -75,9 +62,25 @@ def preprocess_and_return(pil_image, label, image_size=112, transform=None, fixe
 
     # 2. Apply create_square_subsets + form_training_batch_with_fractal
     part1, _ = create_square_subsets(img_tensor.unsqueeze(0))  # (1, 81, H, W)
-    inputs, _ = form_training_batch_with_fractal(part1, 0)  # (1, 81, 112, 112)
+    inputs, _ = form_training_batch_with_fractal(
+        part1, 0, fixed_channel=fixed_channel
+    )  # (1, 81, 112, 112)
 
     return inputs 
+
+
+def preprocess_fcr_and_return(pil_image, image_size=112, transform=None):
+    """Return the paper-aligned 81-channel FCR subset before batch-level FFM."""
+    img = pil_image.convert('RGB')
+    img = img.resize((image_size, image_size))
+    img_array = np.asarray(img).copy()
+    img_tensor = torch.from_numpy(img_array).float().permute(2, 0, 1) / 255.0
+
+    if transform:
+        img_tensor = transform(img_tensor)
+
+    part1, _ = create_square_subsets(img_tensor.unsqueeze(0))
+    return part1
 
 
 

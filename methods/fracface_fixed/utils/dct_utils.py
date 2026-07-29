@@ -10,8 +10,8 @@ def dct_transform(x, chs_remove=None, chs_pad=False,
     Optionally removes or zeroes out specific frequency channels.
 
     Args:
-        x (Tensor): Input image tensor of shape [B, 3, H, W], with values in range [-1, 1].
-        chs_remove (list or None): Indices of frequency channels (0–63) to remove.
+        x (Tensor): Input image tensor of shape [B, 3, H, W], with values in range [0, 1].
+        chs_remove (list or None): Global plane-major channel indices in the range 0–191.
         chs_pad (bool): If True, pruned channels are zero-padded instead of removed.
         size (int): DCT block size (typically 8).
         stride (int): Stride for block DCT, controls downsampling.
@@ -24,9 +24,6 @@ def dct_transform(x, chs_remove=None, chs_pad=False,
     """
     # Ensure input has 3 channels (RGB)
     assert x.shape[1] == 3
-
-    # Normalize input range to [0, 1] as required by TorchJPEG
-    x = x * 0.5 + 0.5
 
     # Upsample to increase spatial resolution (improves DCT quality)
     x = F.interpolate(x, scale_factor=ratio, mode='bilinear', align_corners=True)
@@ -50,15 +47,24 @@ def dct_transform(x, chs_remove=None, chs_pad=False,
     # Rearrange frequency components: [B, C, 64, H_blocks, W_blocks]
     x_freq = x_freq.view(b, c, n_block, n_block, size * size).permute(0, 1, 4, 2, 3)
 
-    # Optional: remove or zero out selected channels
+    # Apply the paper's three per-plane pruning sets, then store the
+    # surviving channels in frequency-major order for the FCR snake split.
     if chs_remove is not None:
-        channels = list(set(range(64)) - set(chs_remove))
         if not chs_pad:
-            # Remove channels directly
-            x_freq = x_freq[:, :, channels, :, :]
+            kept_planes = []
+            for plane in range(3):
+                removed = {
+                    channel - plane * 64
+                    for channel in chs_remove
+                    if plane * 64 <= channel < (plane + 1) * 64
+                }
+                channels = sorted(set(range(64)) - removed)
+                kept_planes.append(x_freq[:, plane, channels])
+            x_freq = torch.stack(kept_planes, dim=2)
         else:
-            # Zero-out the kept channels
-            x_freq[:, :, channels] = 0 
+            for channel in chs_remove:
+                plane, frequency = divmod(channel, 64)
+                x_freq[:, plane, frequency] = 0
 
     # Merge color and frequency dimensions: shape [B, C*F, H_blocks, W_blocks]
     x_freq = x_freq.reshape(b, -1, n_block, n_block)

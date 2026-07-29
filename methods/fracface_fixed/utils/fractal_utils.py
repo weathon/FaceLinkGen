@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchjpeg import dct
-from utils.dct_utils import dct_transform
+from .dct_utils import dct_transform
 
 
 def generate_snake_indices():
@@ -73,7 +73,7 @@ def create_square_subsets(x, chs_prune_per_layer=None):
     return part1, part2
 
 
-def randomize_A1():
+def randomize_A1(rng):
     """
     Randomly generate a base 3x3 matrix A1 with values in [1, 9].
     Used as the foundation for building fractal index matrices.
@@ -81,11 +81,12 @@ def randomize_A1():
     Returns:
         A1 (np.ndarray): A 3x3 matrix with random integers.
     """
-    A1 = np.random.randint(1, 10, size=(3, 3))
-    return A1
+    M0 = rng.randint(1, 10, size=(3, 3))
+    L0 = rng.permutation(9).reshape(3, 3)
+    return M0.flatten()[L0.flatten()].reshape(3, 3)
 
 
-def generate_fsm(iterations=4):
+def generate_fsm(rng):
     """
     Generate a fractal structure matrix (FSM) by recursively expanding a random base matrix.
 
@@ -96,55 +97,30 @@ def generate_fsm(iterations=4):
     Returns:
         E (list[np.ndarray]): List of fractal index matrices from each iteration.
     """
-    E = [None] * iterations
-    A1 = randomize_A1()  # Base matrix
-    E[0] = A1  # Initial 3x3 matrix
-
-    for k in range(1, iterations):
-        q = k - 1
-        factor = 3 ** (2 * k)
-
-        # Create sub-blocks using A1 offsets and previous level matrix
-        B1 = (A1[0, 0] - 1) * factor + E[q]
-        B2 = (A1[0, 1] - 1) * factor + E[q]
-        B3 = (A1[0, 2] - 1) * factor + E[q]
-        B4 = (A1[1, 0] - 1) * factor + E[q]
-        B5 = (A1[1, 1] - 1) * factor + E[q]
-        B6 = (A1[1, 2] - 1) * factor + E[q]
-        B7 = (A1[2, 0] - 1) * factor + E[q]
-        B8 = (A1[2, 1] - 1) * factor + E[q]
-        B9 = (A1[2, 2] - 1) * factor + E[q]
-
-        # Stack into a 3x3 block matrix
-        E[k] = np.block([
-            [B1, B2, B3],
-            [B4, B5, B6],
-            [B7, B8, B9]
-        ])
-
-        # Adjustment for level-2 matrix (9x9) to fit 81-channel format
-        if k == 2:
-            E[k] = E[k] - 1
-
-    return E
+    M0 = randomize_A1(rng)
+    F1 = np.zeros((9, 9), dtype=int)
+    for i in range(9):
+        for j in range(9):
+            F1[i, j] = (
+                (M0[i // 3, j // 3] - 1) * 9
+                + (M0[i % 3, j % 3] - 1)
+            )
+    return F1
 
 
-def apply_fractal_transform(feature_tensor, E, iteration_level=2):
+def apply_fractal_transform(feature_tensor, fractal_matrix):
     """
     Apply fractal transformation on input tensor based on fractal index matrix.
 
     Args:
         feature_tensor (torch.Tensor): Input feature tensor of shape [B, 81, H, W].
-        E (list[np.ndarray]): Fractal index matrices from `generate_fsm`.
-        iteration_level (int): Which fractal level to apply (default 2 -> 9x9).
+        fractal_matrix (np.ndarray): A 9x9 channel index matrix.
 
     Returns:
         transformed_tensor (torch.Tensor): Output tensor with the same shape [B, 81, H, W].
     """
     B, C, H, W = feature_tensor.shape
     assert C == 81, "Input must have 81 channels (9x9 fractal layout)"
-
-    fractal_matrix = E[iteration_level].astype(int)
 
     # Reshape to 2D spatial grid
     feature_reshaped = feature_tensor.view(B, 9, 9, H, W)
@@ -160,7 +136,7 @@ def apply_fractal_transform(feature_tensor, E, iteration_level=2):
     return transformed.view(B, 81, H, W)
 
 
-def form_training_batch_with_fractal(inputs, labels):
+def form_training_batch_with_fractal(inputs, labels, fixed_channel):
     """
     Generate a training batch by applying a shared fractal transformation 
     to all input samples using a single random FSM.
@@ -173,9 +149,12 @@ def form_training_batch_with_fractal(inputs, labels):
         transformed_inputs (torch.Tensor): Fractal-transformed inputs.
         labels (torch.Tensor): Labels (unchanged).
     """
-    b, _, _, _ = inputs.shape
-    E = generate_fsm()  # Shared FSM
-    transformed_inputs = apply_fractal_transform(inputs, E, iteration_level=2)
+    if fixed_channel:
+        rng = np.random.RandomState(42)
+    else:
+        rng = np.random
+    fractal_matrix = generate_fsm(rng)
+    transformed_inputs = apply_fractal_transform(inputs, fractal_matrix)
     return transformed_inputs, labels
 
 

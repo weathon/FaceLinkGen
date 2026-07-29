@@ -24,7 +24,6 @@ def dct_transform(x: torch.Tensor, chs_remove=None, chs_pad=False,
         Tensor of shape [B, C, H', W'] where C is frequency channels.
     """
     assert x.shape[1] == 3, "Input must be RGB image of shape [B, 3, H, W]"
-    x = x * 0.5 + 0.5  # Normalize to [0, 1]
     x = F.interpolate(x, scale_factor=ratio, mode='bilinear', align_corners=True)
     x = dct.to_ycbcr(x * 255) - 128 
 
@@ -36,11 +35,21 @@ def dct_transform(x: torch.Tensor, chs_remove=None, chs_pad=False,
     x_freq = dct.block_dct(x).view(b, c, n_block, n_block, size * size).permute(0, 1, 4, 2, 3)
 
     if chs_remove is not None:
-        kept = list(set(range(64)) - set(chs_remove))
         if chs_pad:
-            x_freq[:, :, kept] = 0
+            for channel in chs_remove:
+                plane, frequency = divmod(channel, 64)
+                x_freq[:, plane, frequency] = 0
         else:
-            x_freq = x_freq[:, :, kept]
+            kept_planes = []
+            for plane in range(3):
+                removed = {
+                    channel - plane * 64
+                    for channel in chs_remove
+                    if plane * 64 <= channel < (plane + 1) * 64
+                }
+                kept = sorted(set(range(64)) - removed)
+                kept_planes.append(x_freq[:, plane, kept])
+            x_freq = torch.stack(kept_planes, dim=2)
 
     return x_freq.reshape(b, -1, n_block, n_block)
 
@@ -86,31 +95,27 @@ def generate_snake_indices():
     return flat[:81].tolist(), flat[81:].tolist()
 
 
-def generate_fsm(iterations=4):
+def generate_fsm():
     """
-    Generate fractal index matrix E (1-based) for given iteration depth.
+    Generate the paper-aligned depth-2 fractal index matrix.
 
     Returns:
-        List of fractal matrices E[0]..E[k]
+        A 9x9 channel index matrix.
     """
-    A1 = np.array([[2, 7, 4], [6, 9, 8], [3, 5, 1]])
-    E = [None] * iterations
-    E[0] = A1
-
-    for k in range(1, iterations):
-        q = k - 1
-        factor = 3 ** (2 * k)
-        E[q] = E[q].astype(int)
-        blocks = [(A1[i, j] - 1) * factor + E[q] for i in range(3) for j in range(3)]
-        E[k] = np.block([[blocks[0], blocks[1], blocks[2]],
-                         [blocks[3], blocks[4], blocks[5]],
-                         [blocks[6], blocks[7], blocks[8]]])
-        if k == 2:
-            E[k] = E[k] - 1
-    return E
+    M0 = np.random.randint(1, 10, size=(3, 3))
+    L0 = np.random.permutation(9).reshape(3, 3)
+    M0 = M0.flatten()[L0.flatten()].reshape(3, 3)
+    fractal = np.zeros((9, 9), dtype=int)
+    for i in range(9):
+        for j in range(9):
+            fractal[i, j] = (
+                (M0[i // 3, j // 3] - 1) * 9
+                + (M0[i % 3, j % 3] - 1)
+            )
+    return fractal
 
 
-def apply_fractal_transform(x: torch.Tensor, E, iteration_level=2) -> torch.Tensor:
+def apply_fractal_transform(x: torch.Tensor, fractal) -> torch.Tensor:
     """
     Apply fractal permutation on a [B, 81, H, W] tensor.
 
@@ -119,7 +124,6 @@ def apply_fractal_transform(x: torch.Tensor, E, iteration_level=2) -> torch.Tens
     """
     B, C, H, W = x.shape
     assert C == 81, "Input must be 81 channels (9x9)."
-    fractal = E[iteration_level].astype(int)
     reshaped = x.view(B, 9, 9, H, W)
     transformed = torch.zeros_like(reshaped)
 
@@ -153,7 +157,6 @@ def load_image_tensor(image_path: str, size=(112, 112)) -> torch.Tensor:
     transform = transforms.Compose([
         transforms.Resize(size),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5]*3, std=[0.5]*3),
     ])
     return transform(img).unsqueeze(0)  # Add batch dim
 
@@ -163,9 +166,9 @@ def main():
     img_tensor = load_image_tensor(image_path).cuda()
 
     part1, part2 = create_square_subsets(img_tensor)
-    fsm_list = generate_fsm(iterations=4)
-    part1_fsm = apply_fractal_transform(part1, fsm_list, iteration_level=2)
-    part2_fsm = apply_fractal_transform(part2, fsm_list, iteration_level=2)
+    fractal = generate_fsm()
+    part1_fsm = apply_fractal_transform(part1, fractal)
+    part2_fsm = apply_fractal_transform(part2, fractal)
     print(part1_fsm.shape, part2_fsm.shape)
     
     visualize_fractal_parts(part1_fsm, part2_fsm)
