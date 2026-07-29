@@ -5,11 +5,13 @@ reconstructions, API records, or visualizations.
 
 The experiment matrix is:
 
-| Protection | Channel modes |
-|---|---|
-| FracFace | fixed, random |
-| PartialFace | fixed, random |
-| MinusFace | random |
+| Protection | Training channel mode | Evaluation channel mode |
+|---|---|---|
+| FracFace | fixed | fixed |
+| FracFace | random | fixed |
+| PartialFace | fixed | fixed |
+| PartialFace | random | fixed |
+| MinusFace | random | random |
 
 Each setting trains both attacks from the common pretrained models:
 
@@ -24,6 +26,9 @@ samples separately. `generate_arc2face.py` generates one face per ours
 embedding, matching the single U-Net reconstruction per identity.
 `eval_apis.py` appends one raw-response record per identity and reports the
 single-image Face++/Amazon rates.
+`measure_reconstruction_metrics.py` measures per-image RGB PSNR and SSIM after
+resizing both the source and reconstruction to 112×112, then writes all 300
+per-image records and aggregate statistics for both attacks.
 
 FracFace fixed mode calls `seed_everything(42)` before constructing its FSM;
 random mode does not seed. PartialFace fixed mode uses the released hard-coded
