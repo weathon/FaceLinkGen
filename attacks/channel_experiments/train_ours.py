@@ -10,7 +10,6 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 import numpy as np
 import torch
 import torch.nn.functional as F
-from deepface import DeepFace
 from onnx2torch import convert
 from PIL import Image
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -61,12 +60,7 @@ class DistillationDataset(Dataset):
             )[0]
             return path, teacher, protected
 
-        face = DeepFace.extract_faces(
-            path, detector_backend="opencv", enforce_detection=True
-        )[0]["face"]
-        if self.method == "minusface":
-            face = face[..., ::-1]
-        image = Image.fromarray((face * 255).astype("uint8"))
+        image = Image.open(path).convert("RGB")
         return path, teacher, self.to_tensor(image)
 
 

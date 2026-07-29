@@ -34,3 +34,6 @@ MinusFace already shuffles channels and therefore has no fixed mode.
 Training, embedding dumps, direct U-Net reconstruction, and API evaluation use
 the `minus_face` conda environment. Arc2Face generation requires its official
 Diffusers stack and uses the `arc2face` environment.
+
+CASIA-WebFace is already face-cropped. Both attacks read those aligned images
+directly and do not run an additional DeepFace crop.

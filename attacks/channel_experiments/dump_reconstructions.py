@@ -9,7 +9,6 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import numpy as np
 import torch
-from deepface import DeepFace
 from onnx2torch import convert
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
@@ -29,9 +28,8 @@ from minusface import MinusBackbone
 
 
 class EvaluationDataset(Dataset):
-    def __init__(self, paths, attack, method, fixed_channel):
+    def __init__(self, paths, method, fixed_channel):
         self.paths = paths
-        self.attack = attack
         self.method = method
         self.fixed_channel = fixed_channel
         self.to_tensor = transforms.Compose([
@@ -44,15 +42,7 @@ class EvaluationDataset(Dataset):
 
     def __getitem__(self, idx):
         path = self.paths[idx]
-        if self.attack == "ours" and self.method != "fracface":
-            face = DeepFace.extract_faces(
-                path, detector_backend="opencv", enforce_detection=True
-            )[0]["face"]
-            if self.method == "minusface":
-                face = face[..., ::-1]
-            image = Image.fromarray((face * 255).astype("uint8"))
-        else:
-            image = Image.open(path).convert("RGB")
+        image = Image.open(path).convert("RGB")
 
         raw = self.to_tensor(image)
         if self.method == "fracface":
@@ -107,7 +97,7 @@ def main():
         idx for idx in range(len(paths)) if idx not in completed
     ]
     dataset = EvaluationDataset(
-        pending_paths, args.attack, args.method, fixed_channel
+        pending_paths, args.method, fixed_channel
     )
     loader = DataLoader(
         dataset,
