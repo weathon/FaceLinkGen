@@ -32,11 +32,12 @@ from minusface import MinusBackbone
 
 
 class DistillationDataset(Dataset):
-    def __init__(self, paths, data_root, method, fixed_channel):
+    def __init__(self, paths, data_root, method, channel_mode):
         self.paths = paths
         self.data_root = data_root
         self.method = method
-        self.fixed_channel = fixed_channel
+        self.channel_mode = channel_mode
+        self.fixed_channel = channel_mode == "fixed"
         self.to_tensor = transforms.Compose([
             transforms.Resize((112, 112)),
             transforms.ToTensor(),
@@ -63,6 +64,11 @@ class DistillationDataset(Dataset):
             return path, teacher, protected
         if self.method == "fracface_fixed":
             image = Image.open(path).convert("RGB")
+            if self.channel_mode == "random_per_sample":
+                protected = data2npy_fixed.preprocess_and_return(
+                    image, 1, fixed_channel=False
+                )[0]
+                return path, teacher, protected
             protected = data2npy_fixed.preprocess_fcr_and_return(image)[0]
             return path, teacher, protected
 
@@ -73,13 +79,19 @@ class DistillationDataset(Dataset):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", required=True, choices=["fracface", "fracface_fixed", "partialface", "minusface"])
-    parser.add_argument("--channel-mode", required=True, choices=["fixed", "random"])
+    parser.add_argument(
+        "--channel-mode",
+        required=True,
+        choices=["fixed", "random", "random_per_sample"],
+    )
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
     if args.method == "minusface":
         assert args.channel_mode == "random"
+    if args.channel_mode == "random_per_sample":
+        assert args.method == "fracface_fixed"
 
     fixed_channel = args.channel_mode == "fixed"
     device = "cuda"
@@ -92,7 +104,9 @@ def main():
             if split == "train":
                 paths.append(os.path.join(args.data_root, filename))
 
-    dataset = DistillationDataset(paths, args.data_root, args.method, fixed_channel)
+    dataset = DistillationDataset(
+        paths, args.data_root, args.method, args.channel_mode
+    )
     loader = DataLoader(
         dataset,
         batch_size=256,
@@ -163,11 +177,13 @@ def main():
             teacher = teacher.to(device)
 
             if args.method == "fracface_fixed":
-                attack_input = data2npy_fixed.form_training_batch_with_fractal(
-                    attack_input,
-                    [1] * attack_input.shape[0],
-                    fixed_channel=fixed_channel,
-                )[0].to(device)
+                if args.channel_mode != "random_per_sample":
+                    attack_input = data2npy_fixed.form_training_batch_with_fractal(
+                        attack_input,
+                        [1] * attack_input.shape[0],
+                        fixed_channel=fixed_channel,
+                    )[0]
+                attack_input = attack_input.to(device)
             elif args.method == "partialface":
                 attack_input = attack_input.to(device)
                 attack_input = processing_utils.form_training_batch(
