@@ -13,25 +13,72 @@ from skimage.metrics import structural_similarity
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CONFIGS = [
-    ("fracface_fixed", "FracFace fixed"),
+    (
+        "fracface_fixed",
+        "FracFace fixed",
+        "fracface_fixed",
+        "fracface_fixed",
+    ),
     (
         "fracface_fixed_implementation_fixed",
         "FracFace-fixed implementation / fixed",
+        "fracface_fixed_implementation_fixed",
+        "fracface_fixed_implementation_fixed",
     ),
-    ("partialface_fixed", "PartialFace fixed"),
+    (
+        "partialface_fixed",
+        "PartialFace fixed",
+        "partialface_fixed",
+        "partialface_fixed",
+    ),
     (
         "fracface_random_train_fixed_test",
         "FracFace random train / fixed test",
+        "fracface_random_train_fixed_test",
+        "fracface_random_train_fixed_test",
     ),
     (
         "fracface_fixed_implementation_random_train_fixed_test",
         "FracFace-fixed implementation / random train / fixed test",
+        "fracface_fixed_implementation_random_train_fixed_test",
+        "fracface_fixed_implementation_random_train_fixed_test",
+    ),
+    (
+        "fracface_fixed_implementation_random_per_sample_train_fixed_test",
+        (
+            "FracFace-fixed implementation / random-per-sample train / "
+            "fixed test / ours 2 epochs"
+        ),
+        "fracface_fixed_implementation_random_per_sample_train_fixed_test",
+        "fracface_fixed_implementation_random_per_sample_train_fixed_test",
+    ),
+    (
+        (
+            "fracface_fixed_implementation_random_per_sample_"
+            "4epoch_train_fixed_test"
+        ),
+        (
+            "FracFace-fixed implementation / random-per-sample train / "
+            "fixed test / ours 4 epochs"
+        ),
+        "fracface_fixed_implementation_random_per_sample_train_fixed_test",
+        (
+            "fracface_fixed_implementation_random_per_sample_"
+            "4epoch_train_fixed_test"
+        ),
     ),
     (
         "partialface_random_train_fixed_test",
         "PartialFace random train / fixed test",
+        "partialface_random_train_fixed_test",
+        "partialface_random_train_fixed_test",
     ),
-    ("minusface_random", "MinusFace random"),
+    (
+        "minusface_random",
+        "MinusFace random",
+        "minusface_random",
+        "minusface_random",
+    ),
 ]
 
 results = {
@@ -53,16 +100,20 @@ results = {
 }
 summary_rows = []
 
-for config_name, display_name in CONFIGS:
+for config_name, display_name, unet_config_name, ours_config_name in CONFIGS:
     results["results"][config_name] = {}
     for attack in ["unet", "ours"]:
+        if attack == "unet":
+            attack_config_name = unet_config_name
+        else:
+            attack_config_name = ours_config_name
         manifest_path = os.path.join(
             ROOT,
             "artifacts",
             "new_plan",
             "reconstructions",
             attack,
-            config_name,
+            attack_config_name,
             "manifest.jsonl",
         )
         with open(manifest_path) as manifest_file:
@@ -86,7 +137,7 @@ for config_name, display_name in CONFIGS:
                     "new_plan",
                     "generated",
                     "ours",
-                    config_name,
+                    attack_config_name,
                     "%04d" % record["index"],
                     "complete.json",
                 )
