@@ -29,10 +29,11 @@ from minusface import MinusBackbone
 
 
 class ReconstructionDataset(Dataset):
-    def __init__(self, paths, method, fixed_channel):
+    def __init__(self, paths, method, channel_mode):
         self.paths = paths
         self.method = method
-        self.fixed_channel = fixed_channel
+        self.channel_mode = channel_mode
+        self.fixed_channel = channel_mode == "fixed"
         self.to_tensor = transforms.Compose([
             transforms.Resize((112, 112)),
             transforms.ToTensor(),
@@ -51,6 +52,11 @@ class ReconstructionDataset(Dataset):
             )[0]
             return path, protected, raw
         if self.method == "fracface_fixed":
+            if self.channel_mode == "random_per_sample":
+                protected = data2npy_fixed.preprocess_and_return(
+                    image, 1, fixed_channel=False
+                )[0]
+                return path, protected, raw
             protected = data2npy_fixed.preprocess_fcr_and_return(image)[0]
             return path, protected, raw
         return path, raw
@@ -59,13 +65,19 @@ class ReconstructionDataset(Dataset):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", required=True, choices=["fracface", "fracface_fixed", "partialface", "minusface"])
-    parser.add_argument("--channel-mode", required=True, choices=["fixed", "random"])
+    parser.add_argument(
+        "--channel-mode",
+        required=True,
+        choices=["fixed", "random", "random_per_sample"],
+    )
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
     if args.method == "minusface":
         assert args.channel_mode == "random"
+    if args.channel_mode == "random_per_sample":
+        assert args.method == "fracface_fixed"
 
     fixed_channel = args.channel_mode == "fixed"
     device = "cuda"
@@ -78,7 +90,7 @@ def main():
             if split == "train":
                 paths.append(os.path.join(args.data_root, filename))
 
-    dataset = ReconstructionDataset(paths, args.method, fixed_channel)
+    dataset = ReconstructionDataset(paths, args.method, args.channel_mode)
     loader = DataLoader(
         dataset,
         batch_size=256,
@@ -167,7 +179,10 @@ def main():
         for batch in progress:
             if args.method in ["fracface", "fracface_fixed"]:
                 _, protected, raw = batch
-                if args.method == "fracface_fixed":
+                if (
+                    args.method == "fracface_fixed"
+                    and args.channel_mode != "random_per_sample"
+                ):
                     protected = data2npy_fixed.form_training_batch_with_fractal(
                         protected,
                         [1] * protected.shape[0],
