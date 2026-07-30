@@ -89,6 +89,7 @@ def main():
     parser.add_argument("--epochs", required=True, type=int)
     args = parser.parse_args()
 
+    assert args.epochs >= 5
     if args.method == "minusface":
         assert args.channel_mode == "random"
     if args.channel_mode == "random_per_sample":
@@ -138,10 +139,11 @@ def main():
         conversion_model = conversion_model.eval().to(device)
 
     epochs = args.epochs
+    constant_epochs = epochs - 5
     optimizer = torch.optim.AdamW(
         student.parameters(), lr=5e-4, weight_decay=5e-3
     )
-    scheduler = CosineAnnealingLR(optimizer, T_max=len(loader) * epochs)
+    scheduler = CosineAnnealingLR(optimizer, T_max=len(loader) * 5)
     resume_path = os.path.join(args.output, "resume.pt")
     start_epoch = 0
     if os.path.exists(resume_path):
@@ -159,6 +161,8 @@ def main():
             "method": args.method,
             "channel_mode": args.channel_mode,
             "epochs": epochs,
+            "constant_epochs": constant_epochs,
+            "cosine_epochs": 5,
             "batch_size": 256,
             "optimizer": "AdamW",
             "lr": 5e-4,
@@ -236,7 +240,8 @@ def main():
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            if epoch >= constant_epochs:
+                scheduler.step()
 
             total_cosine += loss.item()
             batches += 1
