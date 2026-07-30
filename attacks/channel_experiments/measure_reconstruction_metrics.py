@@ -68,6 +68,24 @@ CONFIGS = [
         ),
     ),
     (
+        (
+            "fracface_fixed_implementation_random_per_sample_"
+            "longer_train_fixed_test"
+        ),
+        (
+            "FracFace-fixed implementation / random-per-sample train / "
+            "fixed test / ours 8 epochs / U-Net 30 epochs"
+        ),
+        (
+            "fracface_fixed_implementation_random_per_sample_"
+            "30epoch_train_fixed_test"
+        ),
+        (
+            "fracface_fixed_implementation_random_per_sample_"
+            "8epoch_train_fixed_test"
+        ),
+    ),
+    (
         "partialface_random_train_fixed_test",
         "PartialFace random train / fixed test",
         "partialface_random_train_fixed_test",
