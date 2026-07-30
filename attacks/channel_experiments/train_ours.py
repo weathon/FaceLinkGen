@@ -86,6 +86,7 @@ def main():
     )
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--epochs", required=True, type=int)
     args = parser.parse_args()
 
     if args.method == "minusface":
@@ -136,7 +137,7 @@ def main():
         ))
         conversion_model = conversion_model.eval().to(device)
 
-    epochs = 2
+    epochs = args.epochs
     optimizer = torch.optim.AdamW(
         student.parameters(), lr=5e-4, weight_decay=5e-3
     )
